@@ -1,0 +1,102 @@
+Master Node - Ubuntu 24.04 LTS
+
+1. Update system
+sudo apt update
+
+2. Disable swap
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+3. Load kernel modules
+sudo tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+4. Configure sysctl
+sudo tee /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+sudo sysctl --system
+
+5. Install containerd
+
+sudo apt install -y ca-certificates curl gnupg lsb-release
+sudo mkdir -p /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y containerd.io
+
+
+6. Configure containerd
+containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
+
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+sudo systemctl status containerd
+
+
+7. Main Step on Master node
+
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+sudo apt-get install -y kubelet=1.33.0-1.1 kubeadm=1.33.0-1.1 kubectl=1.33.0-1.1
+
+sudo apt-mark hold kubelet kubeadm kubectl
+
+sudo systemctl enable --now kubelet
+
+Initialize Master Node
+### Run only on Master node
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+Token: 815rqm.sje4i8k1u7oxiybs
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+
+
+
+Install Calico
+
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+
+
+Worker Node:
+
+Repeate from 1 to 7 point - dont run init , run join command
+
+##Run this Worker Node
+
+kubeadm join 172.31.27.82:6443 --token gmhmhl.rwqhkpjum9fvd42f \
+        --discovery-token-ca-cert-hash sha256:c25aa95f8b77cf1b46fcecd200e6167df15a527ec26b5a150db200cd98733aaf
+
+
+Mine: 
+
+kubeadm join 172.31.21.165:6443 --token 815rqm.sje4i8k1u7oxiybs \
+        --discovery-token-ca-cert-hash sha256:59a1dff154a8fe6a7b77416a6be570900728addcb380fa3cf3720693dd79833f 
+
+
+

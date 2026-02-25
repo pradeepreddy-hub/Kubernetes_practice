@@ -1,0 +1,259 @@
+EC2 Instances
+     |
+Kubernetes (kubeadm cluster)
+     |
+AWS Cloud Controller Manager
+     |
+AWS APIs (ELB, Routes, etc.)
+
+You must tag:
+
+EC2 instances
+
+Subnets
+
+Security groups
+
+(optionally VPC)
+
+key - kubernetes.io/cluster/kubernetes
+value- owned
+
+
+If you want LoadBalancer support, also add:
+
+For public subnet:
+
+kubernetes.io/role/elb = 1
+
+For private subnet:
+
+kubernetes.io/role/internal-elb = 1
+
+
+1. Update system
+sudo apt update
+
+2. Disable swap
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+3. Load kernel modules
+sudo tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+4. Configure sysctl
+sudo tee /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+sudo sysctl --system
+
+5. Install containerd
+
+sudo apt install -y ca-certificates curl gnupg lsb-release
+sudo mkdir -p /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y containerd.io
+
+
+6. Configure containerd
+containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
+
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+sudo systemctl status containerd
+
+
+7. Main Step on Master node
+
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+sudo apt-get install -y kubelet=1.33.0-1.1 kubeadm=1.33.0-1.1 kubectl=1.33.0-1.1
+
+sudo apt-mark hold kubelet kubeadm kubectl
+
+sudo systemctl enable --now kubelet
+
+
+### create-file on Master Node
+
+vi kubeadm-config.yaml
+
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+kubernetesVersion: v1.33.0
+clusterName: kubernetes 
+
+networking:
+  podSubnet: 10.244.0.0/16
+
+controllerManager:
+  extraArgs:
+    cloud-provider: external
+
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+nodeRegistration:
+  kubeletExtraArgs:
+    cloud-provider: external
+
+
+sudo kubeadm init --config kubeadm-config.yaml
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+
+
+## Apply or Install kube calico file
+
+
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+
+
+## Worker Node
+
+
+Repeate from 1 to 7 point - dont run init , run join command
+
+##Run this Worker Node
+
+vi kubeadm-join.yaml
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: JoinConfiguration
+
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: 172.31.27.82:6443
+    token: gmhmhl.rwqhkpjum9fvd42f
+    caCertHashes:
+      - sha256:c25aa95f8b77cf1b46fcecd200e6167df15a527ec26b5a150db200cd98733aaf
+
+nodeRegistration:
+  kubeletExtraArgs:
+    cloud-provider: external
+
+
+sudo kubeadm join --config kubeadm-join.yaml
+
+
+kubectl taint nodes ip-172-31-27-82 node.cloudprovider.kubernetes.io/uninitialized-
+
+
+#### Deploy AWS Cloud Controller Manager Using Helm
+
+helm repo add aws-cloud-controller-manager https://kubernetes.github.io/cloud-provider-aws
+helm repo update
+
+vi aws-ccm-values.yaml
+
+hostNetworking: true
+
+tolerations:
+  - key: node.cloudprovider.kubernetes.io/uninitialized
+    operator: Exists
+    effect: NoSchedule
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+args:
+  - --cluster-cidr=10.244.0.0/16
+  - --cloud-provider=aws
+  - --v=2
+
+
+helm install aws-cloud-controller-manager aws-cloud-controller-manager/aws-cloud-controller-manager \
+  --namespace kube-system \
+  --create-namespace \
+  --values aws-ccm-values.yaml
+
+
+helm status aws-cloud-controller-manager -n kube-system
+
+2️⃣ Install the EBS CSI Driver via Helm
+
+
+helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+helm repo update
+
+
+helm install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
+  -n kube-system \
+  --create-namespace
+
+  1️⃣ Create ebs-sc.yaml
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+parameters:
+  type: gp3          # or gp2 / io1 / io2
+  fsType: ext4
+  encrypted: "true"
+
+
+Create a PVC (PersistentVolumeClaim)
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-test-pvc
+spec:
+  storageClassName: ebs-sc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+Apply it:
+
+kubectl apply -f ebs-test-pvc.yaml
+kubectl get pvc
+
+Once the PVC is Bound, you can mount it in a pod:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ebs-test-pod
+spec:
+  containers:
+  - name: app
+    image: nginx
+    volumeMounts:
+    - name: ebs-vol
+      mountPath: /usr/share/nginx/html
+  volumes:
+  - name: ebs-vol
+    persistentVolumeClaim:
+      claimName: ebs-test-pvc
