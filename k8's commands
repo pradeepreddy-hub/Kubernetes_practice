@@ -1,0 +1,18 @@
+Kubectl get nodes
+kubectl get pods -A
+Kubectl get pods -A -o wide
+crictl --help
+crictl ps
+systemctl status kublet
+kubectl get pods -n kube-system
+kubectl get pods -n default
+kubectl get namespaces
+kubectl get pods
+kubectl apply -f filename.yaml
+circtl ps -a | grep pause
+curl -v IP-address:port
+kubectl get svc
+kubectl get endpoints
+kubectl get pods --show-labels
+
+
