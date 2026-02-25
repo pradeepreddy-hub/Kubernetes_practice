@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jenkins-ngnix
+  labels:
+    name: CICD
+spec:
+  containers:
+  - name: jenkins
+    image: jenkins/jenkins:lts
+  - name: nginx
+    image: nginx:1.14.2  
+
