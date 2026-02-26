@@ -14,5 +14,14 @@ curl -v IP-address:port
 kubectl get svc
 kubectl get endpoints
 kubectl get pods --show-labels
+kubectl delete pods --all
+kubectl delete svc --all
+kubectl delete rs --all
+kubectl describe pods -owide
+kubectl describe svc -owide
+kubectl get replicasets/rs
+kubectl scale rs jenkins-replica-set  --replica=2
+kubectl exec -it tomcat -c tomcat -- /bin/bash
+kubectl delete pod podname
 
 
