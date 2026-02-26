@@ -2,22 +2,20 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: jenkins-ngnix
+  name: jenkins-pod
   labels:
     name: CICD
 spec:
   containers:
   - name: jenkins
-    image: jenkins/jenkins:lts
-  - name: nginx
-    image: nginx:1.14.2  
+    image: jenkins/jenkins:lts 
 
 ----------services------------------------
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: jenkins-ngnix
+  name: jenkins-svc
 spec:
   selector:
     name: CICD
