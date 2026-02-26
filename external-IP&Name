@@ -1,0 +1,22 @@
+----------------external-IP-------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+  externalIPs:
+    - 192.168.1.100
+
+--------------external name----------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: flipkart-external
+spec:
+  type: ExternalName
+  externalName: www.flipkart.com
