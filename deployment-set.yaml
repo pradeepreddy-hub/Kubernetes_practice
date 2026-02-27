@@ -1,0 +1,23 @@
+apiVersion: apps/v1                   # API version for ReplicaSet
+kind: Deployment                      # This defines a ReplicaSet resource
+metadata:
+  name: nginx-deployemnt-set           # Name of the ReplicaSet
+  namespace: default                  # Namespace where it will be created
+spec:
+  strategy:
+    type: RollingUpdate             # Update pods one by one without downtime
+    rollingUpdate:
+      maxSurge: 2                   # Max 2 extra pods allowed during update
+      maxUnavailable: 1            # Only 1 pod can be down at a time during update
+  replicas: 4                      # Number of Pod replicas to maintain
+  selector: 
+    matchLabels:
+      my-pod: my-nginx            # Selector to match the Pods controlled by this ReplicaSet
+  template:                           # Template for the Pods to be created
+    metadata:
+      labels:
+        my-pod: my-nginx            # Label that must match the selector
+    spec:
+      containers:
+        - name: nginx               # Container name
+          image: nginx:1.29.5-otel  # Jenkins image from Docker Hub
