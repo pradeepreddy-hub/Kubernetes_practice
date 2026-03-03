@@ -1,0 +1,35 @@
+-------------------------replicaSet-------------------------------------
+apiVersion: apps/v1                   # API version for ReplicaSet
+kind: ReplicaSet                      # This defines a ReplicaSet resource
+metadata:
+  name: jenkins-replica-set           # Name of the ReplicaSet
+  namespace: default                  # Namespace where it will be created
+spec:
+  replicas: 2                      # Number of Pod replicas to maintain
+  selector: 
+    matchLabels:
+      my-pod: my-jenkins              # Selector to match the Pods controlled by this ReplicaSet
+  template:                           # Template for the Pods to be created
+    metadata:
+      labels:
+        my-pod: my-jenkins            # Label that must match the selector
+    spec:
+      containers:
+        - name: jenkins               # Container name
+          image: jenkins/jenkins:lts  # Jenkins image from Docker Hub
+
+------------------------nodeport service ------------------------------------------
+
+apiVersion: v1                        # API version for Service
+kind: Service                         # This defines a Service resource
+metadata:
+  name: jenkins-nodeport              # Name of the Service
+spec:
+  type: NodePort                      # Makes the Service accessible from outside the cluster
+  selector:
+    my-pod: my-jenkins                # Selects Pods with this label (linked to ReplicaSet)
+  ports:
+    - protocol: TCP                   # Network protocol
+      port: 8080                      # Service port inside the cluster
+      targetPort: 8080                # Port on the Pod/container
+      nodePort: 30008                 # Port on the Node (for external access)

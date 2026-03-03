@@ -1,0 +1,13 @@
+apiVersion: v1                        # API version for Service
+kind: Service                         # This defines a Service resource
+metadata:
+  name: jenkins-nodeport              # Name of the Service
+spec:
+  type: NodePort                      # Makes the Service accessible from outside the cluster
+  selector:
+    my-pod: my-jenkins                # Selects Pods with this label (linked to ReplicaSet)
+  ports:
+    - protocol: TCP                   # Network protocol
+      port: 8080                      # Service port inside the cluster
+      targetPort: 8080                # Port on the Pod/container
+      nodePort: 30008                 # Port on the Node (for external access)

@@ -1,0 +1,27 @@
+-------pod-----------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jenkins-pod
+  labels:
+    name: CICD
+spec:
+  containers:
+  - name: jenkins
+    image: jenkins/jenkins:lts 
+
+----------services------------------------
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-svc
+spec:
+  selector:
+    name: CICD
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+  clusterIP: 10.0.171.239
+  type: LoadBalancer

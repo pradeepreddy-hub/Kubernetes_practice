@@ -1,0 +1,18 @@
+apiVersion: apps/v1                   # API version for ReplicaSet
+kind: ReplicaSet                      # This defines a ReplicaSet resource
+metadata:
+  name: nginx-replica-set           # Name of the ReplicaSet
+  namespace: default                  # Namespace where it will be created
+spec:
+  replicas: 1                      # Number of Pod replicas to maintain
+  selector: 
+    matchLabels:
+      my-pod: my-nginx            # Selector to match the Pods controlled by this ReplicaSet
+  template:                           # Template for the Pods to be created
+    metadata:
+      labels:
+        my-pod: my-nginx            # Label that must match the selector
+    spec:
+      containers:
+        - name: nginx               # Container name
+          image: nginx:latest  # Jenkins image from Docker Hub

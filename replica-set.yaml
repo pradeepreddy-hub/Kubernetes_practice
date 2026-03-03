@@ -1,0 +1,18 @@
+apiVersion: apps/v1                   # API version for ReplicaSet
+kind: ReplicaSets                      # This defines a ReplicaSet resource
+metadata:
+  name: jenkins-deployment           # Name of the ReplicaSet
+  namespace: default                  # Namespace where it will be created
+spec:
+  replicas: 4                      # Number of Pod replicas to maintain
+  selector: 
+    matchLabels:
+      my-pod: my-jenkins              # Selector to match the Pods controlled by this ReplicaSet
+  template:                           # Template for the Pods to be created
+    metadata:
+      labels:
+        my-pod: my-jenkins            # Label that must match the selector
+    spec:
+      containers:
+        - name: jenkins               # Container name
+          image: jenkins/jenkins:lts  # Jenkins image from Docker Hub

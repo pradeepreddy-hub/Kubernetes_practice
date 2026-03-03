@@ -1,0 +1,15 @@
+hostNetworking: true
+
+tolerations:
+  - key: node.cloudprovider.kubernetes.io/uninitialized
+    operator: Exists
+    effect: NoSchedule
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+args:
+  - --cluster-cidr=10.244.0.0/16
+  - --cloud-provider=aws
+  - --v=2
+
