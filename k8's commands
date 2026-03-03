@@ -29,5 +29,10 @@ kubectl get node --show-labels
 kubectl taint node ip-172-31-14-17 size=big:PreferNoSchedule-
 kubectl taint node ip-172-31-24-33 colour=orange:NoSchedule-
 kubectl delete daemonset nginx-daemonset
+______________________________________________________________________________
+
+kubectl apply -v pv-data.yaml
+kubectl get pv -o wide
+kubectl get pvc -o wide
 
 
