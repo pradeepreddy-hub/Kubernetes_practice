@@ -4,6 +4,7 @@ Kubectl get pods -A -o wide
 crictl --help
 crictl ps
 systemctl status kublet
+kubectl config set-context --current --namespace=n8n
 kubectl get pods -n kube-system
 kubectl get pods -n default
 kubectl get namespaces
