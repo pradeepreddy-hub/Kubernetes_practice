@@ -43,6 +43,8 @@ _______________________________________________________________________________
 kubectl get cm app-config -o json
 kubectl get cm app-config -o yaml
 kubectl edit cm app-config
+kubectl rollout restart deployment tomcat-deployment
+
 
 
 
