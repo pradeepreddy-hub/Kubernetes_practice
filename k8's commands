@@ -38,6 +38,11 @@ kubectl get pvc -o wide
 kubectl get storageclass or Kubectl get sc -o wide
 kubectl delete -f ebs-test-pod.yaml
 kubectl get pods -n kube-system | grep efs
+_______________________________________________________________________________
+
+kubectl get cm app-config -o json
+kubectl get cm app-config -o yaml
+kubectl edit cm app-config
 
 
 
