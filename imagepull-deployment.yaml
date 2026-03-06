@@ -19,3 +19,9 @@ spec:
         - containerPort: 8080
       imagePullSecrets:
       - name: my-registry-secret
+
+  kubectl create secret docker-registry my-registry-secret \
+  --docker-server=https://hub.docker.com/repository/docker/pradeepreddyhub/hello-world-war/tags/latest/sha256-3e1c5911ea7689f54521cc8bec545e900a02f2998a2760e6946acb6f38c0a1c0 \
+  --docker-username=pradeepreddyhub \
+  --docker-password=Pradeep*90 \
+  --docker-email=pradeep.it.reddy@gmail.com
