@@ -67,6 +67,7 @@ apt update
 apt install net-tools
 apt install dnsutils -y
 nlookup jenkins-svc.default.svc.cluster.local
+kubectl get endpoints flask-cluster
 
 
 
