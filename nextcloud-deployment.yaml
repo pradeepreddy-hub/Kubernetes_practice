@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      containers:
+      - name: nextcloud
+        image: pradeepreddyhub/nextcloud:apache
+        env:
+        - name: MYSQL_HOST
+          value: "mariadb"
+        - name: MYSQL_DATABASE
+          value: "nextcloud"
+        - name: MYSQL_USER
+          value: "nextcloud"
+        - name: MYSQL_PASSWORD
+          value: "nextcloud"
+        - name: REDIS_HOST
+          value: "redis"
+        - name: NEXTCLOUD_TRUSTED_DOMAINS
+          value: "a2936f4814fef4c6a982849ceddfd178-af315045c9b01f58.elb.ap-south-1.amazonaws.com"
+        - name: OVERWRITEPROTOCOL
+          value: "http"
+        - name: OVERWRITEWEBROOT
+          value: "/nextcloud"
+        - name: OVERWRITECLIURL
+          value: "http://a2936f4814fef4c6a982849ceddfd178-af315045c9b01f58.elb.ap-south-1.amazonaws.com/nextcloud"
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud
+spec:
+  selector:
+    app: nextcloud
+  ports:
+  - port: 80
+    targetPort: 80

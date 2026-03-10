@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wordpress-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ebs-sc
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+    spec:
+      containers:
+      - name: wordpress
+        image: pradeepreddyhub/wordpress:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: "mysql"
+        - name: WORDPRESS_DB_USER
+          value: "wordpress"
+        - name: WORDPRESS_DB_PASSWORD
+          value: "wordpress"
+        - name: WORDPRESS_DB_NAME
+          value: "wordpress"
+        - name: WORDPRESS_TABLE_PREFIX
+          value: "wp_"
+        - name: WORDPRESS_CONFIG_EXTRA
+          value: >-
+            define('WP_HOME','http://a2936f4814fef4c6a982849ceddfd178-af315045c9b01f58.elb.ap-south-1.amazonaws.com/wordpress');
+            define('WP_SITEURL','http://a2936f4814fef4c6a982849ceddfd178-af315045c9b01f58.elb.ap-south-1.amazonaws.com/wordpress');
+            define('FORCE_SSL_ADMIN', false);
+            define('WP_HTTP_BLOCK_EXTERNAL', false);
+            $_SERVER['HTTPS'] = 'off';
+            define('COOKIE_DOMAIN', '');
+        volumeMounts:
+        - name: wordpress-data
+          mountPath: /var/www/html/wp-content
+      volumes:
+      - name: wordpress-data
+        persistentVolumeClaim:
+          claimName: wordpress-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-lb
+spec:
+  selector:
+    app: wordpress
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80

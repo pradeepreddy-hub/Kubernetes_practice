@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wordpress-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /wordpress(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: wordpress-lb
+            port:
+              number: 80
+      - path: /wp-admin(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: wordpress-lb
+            port:
+              number: 80
+      - path: /wp-content(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: wordpress-lb
+            port:
+              number: 80
+      - path: /wp-includes(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: wordpress-lb
+            port:
+              number: 80
+      - path: /wp-login.php(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: wordpress-lb
+            port:
+              number: 80
