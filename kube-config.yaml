@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: job-script
+data:
+  script.sh: |
+    #!/bin/bash
+    echo "Running Kubernetes Job Script"
+    date
+    echo "Processing..."
+    sleep 5
+    echo "Done"

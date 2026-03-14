@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: python-list-services
+spec:
+  template:
+    spec:
+      serviceAccountName: python-job-sa
+      restartPolicy: Never
+      containers:
+      - name: python
+        image: python:3.10
+        command:
+        - /bin/sh
+        - -c
+        - |
+          pip install kubernetes && python - <<EOF
+          from kubernetes import client, config
+          config.load_incluster_config()
+          v1 = client.CoreV1Api()
+          print("Listing services:")
+          for svc in v1.list_service_for_all_namespaces().items:
+              print(svc.metadata.namespace, svc.metadata.name)
+          EOF

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: python-k8s-client
+spec:
+  containers:
+  - name: python
+    image: python:3.10
+    command: ["sleep","3600"]
+  restartPolicy: Never

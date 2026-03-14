@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: script-file-cronjob
+spec:
+  schedule: "*/1 * * * *"   # runs every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: runner
+            image: ubuntu:22.04
+            command: ["/bin/bash","/scripts/script.sh"]
+            volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+          volumes:
+          - name: script-volume
+            configMap:
+              name: job-script
+              defaultMode: 0755
+          restartPolicy: Never
